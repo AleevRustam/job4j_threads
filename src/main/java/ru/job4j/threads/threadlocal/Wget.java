@@ -9,16 +9,26 @@ import java.nio.file.Files;
 public class Wget implements Runnable {
     private final String url;
     private final int speed;
+    private final String fileName;
 
     public Wget(String url, int speed) {
         this.url = url;
+        this.fileName = extractFileNameFromUrl(url);
         this.speed = speed;
+    }
+
+    private static String extractFileNameFromUrl(String url) {
+        int lastSlashIndex = url.lastIndexOf('/');
+        if (lastSlashIndex == -1 || lastSlashIndex == url.length() - 1) {
+            throw new IllegalArgumentException("Invalid URL: Cannot determine file name.");
+        }
+        return url.substring(lastSlashIndex + 1);
     }
 
     @Override
     public void run() {
         var startAt = System.currentTimeMillis();
-        var file = new File("tmp.xml");
+        var file = new File(fileName);
         try (var input = new URL(url).openStream();
             var output = new FileOutputStream(file)) {
             System.out.println("Open connection: "
@@ -26,16 +36,22 @@ public class Wget implements Runnable {
                     + " ms");
             var dataBuffer = new byte[512];
             int bytesRead;
+            var downloadedBytes = 0;
             while ((bytesRead = input.read(dataBuffer, 0, dataBuffer.length)) != -1) {
-                var downloadAt = System.nanoTime();
+                long beforeWrite = System.nanoTime();
                 output.write(dataBuffer, 0, bytesRead);
+                long afterWrite = System.nanoTime();
 
-                long elapsedTime = System.nanoTime() - downloadAt;
-                long sleepTime = Math.max(0, (bytesRead / speed) * 1_000_000L - elapsedTime);
-                if (sleepTime > 0) {
-                    Thread.sleep(sleepTime / 1_000_000, (int) (sleepTime % 1_000_000));
+                downloadedBytes += bytesRead;
+                if (downloadedBytes >= speed) {
+                    long elapsedTime = System.currentTimeMillis() - startAt;
+                    if (elapsedTime < 1000) {
+                        Thread.sleep(1000 - elapsedTime);
+                    }
+                    startAt = System.currentTimeMillis();
+                    downloadedBytes = 0;
                 }
-                System.out.println("Read " + bytesRead + " bytes : " + (System.nanoTime() - downloadAt) + " ns.");
+                System.out.println("Read " + bytesRead + " bytes : " + (afterWrite - beforeWrite) + " ns.");
             }
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
@@ -49,8 +65,7 @@ public class Wget implements Runnable {
 
     public static void main(String[] args) throws InterruptedException {
         if (args.length != 2) {
-            System.out.println("Use args format: <URL> <speed>");
-            return;
+            throw new IllegalArgumentException("Use args format: <URL> <speed>");
         }
 
         String url = args[0];
