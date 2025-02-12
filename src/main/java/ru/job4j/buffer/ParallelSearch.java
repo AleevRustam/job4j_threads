@@ -12,14 +12,13 @@ public class ParallelSearch {
                             System.out.println(queue.poll());
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
-                            break;
                         }
                     }
                 }
         );
         consumer.start();
 
-        new Thread(
+        Thread producer = new Thread(
                 () -> {
                     for (int index = 0; index != 3; index++) {
                         try {
@@ -34,8 +33,14 @@ public class ParallelSearch {
                             Thread.currentThread().interrupt();
                         }
                     }
-                    consumer.interrupt();
                 }
-        ).start();
+        );
+        producer.start();
+        try {
+            producer.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        consumer.interrupt();
     }
 }
