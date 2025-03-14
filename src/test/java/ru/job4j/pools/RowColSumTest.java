@@ -13,30 +13,39 @@ class RowColSumTest {
         int[][] matrix = {
                 {1, 2, 3},
                 {4, 5, 6},
-                {7, 8 , 9}
+                {7, 8, 9}
         };
-        RowColSum.Sums[] result = RowColSum.Sums.sum(matrix);
-        assertThat(result[0].getRowSum()).isEqualTo(6);
-        assertThat(result[1].getRowSum()).isEqualTo(15);
-        assertThat(result[2].getRowSum()).isEqualTo(24);
-        assertThat(result[0].getColSum()).isEqualTo(12);
-        assertThat(result[1].getColSum()).isEqualTo(15);
-        assertThat(result[2].getColSum()).isEqualTo(18);
+
+        Sums[] expected = {
+          new Sums(6, 12),
+          new Sums(15, 15),
+          new Sums(24, 18)
+        };
+
+        RowColSum rowColSum = new RowColSum();
+        Sums[] result = rowColSum.sum(matrix);
+
+        assertThat(result).isEqualTo(expected);
     }
 
     @Test
     public void whenAsyncSum() throws ExecutionException, InterruptedException {
+
         int[][] matrix = {
                 {1, 2, 3},
                 {4, 5, 6},
                 {7, 8, 9}
         };
-        RowColSum.Sums[] result = RowColSum.Sums.asyncSum(matrix);
-        assertThat(result[0].getRowSum()).isEqualTo(6);
-        assertThat(result[1].getRowSum()).isEqualTo(15);
-        assertThat(result[2].getRowSum()).isEqualTo(24);
-        assertThat(result[0].getColSum()).isEqualTo(12);
-        assertThat(result[1].getColSum()).isEqualTo(15);
-        assertThat(result[2].getColSum()).isEqualTo(18);
+
+        Sums[] expected = {
+                new Sums(6, 12),
+                new Sums(15, 15),
+                new Sums(24, 18)
+        };
+
+        RowColSum rowColSum = new RowColSum();
+        Sums[] result = rowColSum.asyncSum(matrix);
+
+        assertThat(result).isEqualTo(expected);
     }
 }
